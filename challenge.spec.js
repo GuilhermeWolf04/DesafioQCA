@@ -100,4 +100,27 @@ test('Coletar dados do IBGE', async ({ page }) => {
 
   fs.writeFileSync('dados.json', JSON.stringify(resultados, null, 2), 'utf-8');
   console.log('✅ Dados salvos em dados.json');
+
+  const XLSX = require('xlsx');
+
+  function flatten(obj, prefix = '') {
+    return Object.keys(obj).reduce((acc, k) => {
+      const pre = prefix.length ? prefix + '.' : '';
+      if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
+        Object.assign(acc, flatten(obj[k], pre + k));
+      } else {
+        acc[pre + k] = obj[k];
+      }
+      return acc;
+    }, {});
+  }
+
+  const dadosFlat = resultados.map(flatten);
+
+  const ws = XLSX.utils.json_to_sheet(dadosFlat);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+  XLSX.writeFile(wb, 'dados.xlsx');
+
+  console.log('✅ Planilha dados.xlsx gerada!');
 });
